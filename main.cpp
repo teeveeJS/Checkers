@@ -1,45 +1,73 @@
 #include <cstdlib>
 #include <iostream>
-#include <string>
+//#include <string>
+#include <math.h>
 
 using namespace std;
 
-char board[8][8];
 bool move_white = true;
+
+class Bitboard {
+  char board [32];
+  public:
+    void init(void);
+    char * printBoard(void);
+    //bool isLegal();
+    //two options for making the move: new Bitboard or update the current
+    //e.g. void/Bitboard updateBoard()
+};
+
+void Bitboard::init() {
+  for (int i = 0; i < 12; i++) {
+    board[i] = 'x'; //white pieces
+    board[31-i] = 'y'; //black pieces
+    if (i < 8) {
+      board[12 + i] = 'o'; //empty squares
+    }
+  }
+  std::cout << "The board has been initialized\n" << std::endl;
+  //could return board for function chaining idk
+}
+
+char * Bitboard::printBoard() {
+  static char tempBoard [73]; //9x8 (+1 for null character at the end)
+  tempBoard[72] = '\0';
+  for (int i = 0; i < 72; i++) {
+    if ( ((i + 1) % 9) == 0) {
+      tempBoard[i] = '\n';
+    } else if ( (i % 2) == 0) {
+      tempBoard[i] = 'o';
+    } else {
+      int conversion = (i - (1 + floor(i) * 2)) / 2;
+      //there's definitely something more elegant
+      tempBoard[i] = board[conversion];
+    }
+  }
+  return tempBoard;
+}
 
 class Move {
   int initRank, initFile, finRank, finFile;
   public:
-    void set_values(int, int, int, int);
+    void setValues(int, int, int, int); //maybe a string instead
 };
 
-void initBoard() {
-  for (int i = 0; i < 8; i++) {
-    for (int j = 0; j < 8; j++) {
-      board[i][j] = 'o';
-    }
-  }
-  for (int i = 0; i < 3; i++) {
-    for (int j = 0; j < 8; j++) {
-      if (i % 2 == 0 && j % 2 == 0 || i % 2 != 0 && j % 2 != 0) {
-          board[i][j] = 'x';
-          board[7-i][7-j] = 'y';
-        }
-    }
-  }
-  cout<<"The board has been initialized\nWhite to move.\n";
-}
-
-void printBoard() {
-  for (int i = 0; i < 8; i++) {
-    char c = i;
-    std::cout<<c + board[i]<<std::endl;
-  }
+void Move::setValues(int iR, int iF, int fiR, int fiF) {
+  initRank = iR;
+  initFile = iF;
+  finRank = fiR;
+  finFile = fiF;
 }
 
 int main() {
-  initBoard();
-  printBoard();
+  Bitboard test;
+  test.init();
+
+  char *b;
+  b = test.printBoard();
+  std::cout << *b << std::endl;
+
+  std::cout << "test over" << std::endl;
   /*
   while (true) {
     string move;
@@ -47,4 +75,5 @@ int main() {
     getline (cin, move);
 
   }*/
+  return 0;
 }

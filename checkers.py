@@ -5,6 +5,12 @@ class Color(enum.Enum):
     RED = 0
     BLACK = 1
 
+    def __eq__(self, other):
+        return self.value == other.value
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
 
 class Move:
     def __init__(self, start, end):
@@ -18,6 +24,15 @@ class Move:
     @property
     def end(self):
         return self.__end
+
+    def __eq__(self, other):
+        return self.start == other.start and self.end == other.end
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __str__(self):
+        return "{0} -> {1}".format(self.start, self.end)
 
 
 class Piece:
@@ -42,12 +57,49 @@ class Board:
         self.__tiles = Board.__init_tiles(rows, columns)
         self.__player_to_move = starting_player
 
+    def move(self, move):
+        self.__tiles[move.end[0]][move.end[1]] = self.at(move.start)
+        self.__tiles[move.start[0]][move.start[1]] = None
+
+    def switch_player_to_move(self):
+        if self.player_to_move == Color.RED:
+            self.__player_to_move == Color.BLACK
+        else:
+            self.__player_to_move == Color.RED
+
     def contains(self, position):
         return 0 <= position[0] < len(self.tiles) \
             and 0 <= position[1] < len(self.tiles[0])
 
     def at(self, position):
         return self.tiles[position[0]][position[1]]
+
+    def winner(self):
+        n_black_pieces = 0
+        n_red_pieces = 0
+
+        for row in self.tiles:
+            for tile in row:
+                if tile is not None:
+                    if tile.color == Color.RED:
+                        n_red_pieces += 1
+                    elif tile.color == Color.BLACK:
+                        n_black_pieces += 1
+
+        if n_black_pieces == 0:
+            return Color.RED
+        elif n_red_pieces == 0:
+            return Color.BLACK
+        else:
+            return None
+
+    @property
+    def rows(self):
+        return len(self.tiles)
+
+    @property
+    def columns(self):
+        return len(self.tiles[0])
 
     @property
     def player_to_move(self):
@@ -58,8 +110,9 @@ class Board:
         return self.__tiles
 
     def __str__(self):
-        s = ""
-        for row in self.tiles:
+        s = "  " + " ".join(str(c) for c in range(self.columns)) + "\n\n"
+        for r, row in enumerate(self.tiles):
+            s += str(r) + " "
             for tile in row:
                 if tile is None:
                     s += "-"
@@ -79,7 +132,7 @@ class Board:
 
         tiles = [[None for _ in range(columns)] for _ in range(rows)]
 
-        for r in range(rows - 5):
+        for r in range(rows // 2 - 1):
             for c in range(columns):
                 if (r & 1) != (c & 1):
                     tiles[r][c] = Piece(Color.BLACK)
@@ -100,12 +153,12 @@ def _offsets(is_attack, color, is_king):
 
 
 def _possible_normal_moves(board, color):
-    offsets = _offsets(False)
     normal_moves = []
 
-    for row, r in iter(board.tiles):
-        for tile, c in iter(row):
-            if board.at((r, c)) == color:
+    for r, row in enumerate(board.tiles):
+        for c, tile in enumerate(row):
+            if tile is not None and tile.color == color:
+                offsets = _offsets(False, color, tile.is_king)
                 new_positions = [(r + dr, c + dc) for dr, dc in offsets]
                 normal_moves += [Move((r, c), position)
                                  for position in new_positions
@@ -122,18 +175,18 @@ def _midpoint(point1, point2):
 
 
 def _possible_attacks(board, color):
-    offsets = _offsets(True)
     attacks = []
 
-    for row, r in iter(board.tiles):
-        for tile, c in iter(row):
-            if board.at((r, c)) == color:
+    for r, row in enumerate(board.tiles):
+        for c, tile in enumerate(row):
+            if tile is not None and tile.color == color:
+                offsets = _offsets(True, color, tile.is_king)
                 new_positions = [(r + dr, c + dc) for dr, dc in offsets]
-                attacks += [Move((r, c), position)
-                            for position in new_positions
-                            if board.contains(position)
-                            and board.at(position) is None
-                            and board.at(_midpoint((r, c), position)) is None]
+                for position in new_positions:
+                    if board.contains(position) and board.at(position) is None:
+                        mid_tile = board.at(_midpoint((r, c), position))
+                        if mid_tile is not None and mid_tile.color != color:
+                            attacks.append(Move((r, c), position))
 
     return attacks
 

@@ -1,8 +1,12 @@
-from checkers import Board
+import ai
+import checkers
 
 
 def main():
-    print(Board())
+    board = checkers.Board()
+    print(board)
+    board.move(ai.make_move(board))
+    print(board)
 
 
 if __name__ == "__main__":

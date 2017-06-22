@@ -6,6 +6,8 @@ class Color(enum.Enum):
     BLACK = 1
 
     def __eq__(self, other):
+        if type(self) is not type(other):
+            return False
         return self.value == other.value
 
     def __ne__(self, other):
@@ -16,6 +18,13 @@ class Move:
     def __init__(self, start, end):
         self.__start = start
         self.__end = end
+
+    def is_attack(self):
+        def diff2(val1, val2):
+            return abs(val1 - val2) == 2
+
+        return diff2(self.start[0], self.end[0]) \
+            and diff2(self.start[1], self.end[1])
 
     @property
     def start(self):
@@ -52,20 +61,29 @@ class Piece:
         return self.__is_king
 
 
+def _midpoint(point1, point2):
+    r1, c1 = point1
+    r2, c2 = point2
+    return ((r1 + r2) // 2, (c1 + c2) // 2)
+
+
 class Board:
     def __init__(self, rows=8, columns=8, starting_player=Color.RED):
         self.__tiles = Board.__init_tiles(rows, columns)
         self.__player_to_move = starting_player
 
     def move(self, move):
+        if move.is_attack():
+            mid = _midpoint(move.start, move.end)
+            self.__tiles[mid[0]][mid[1]] = None
         self.__tiles[move.end[0]][move.end[1]] = self.at(move.start)
         self.__tiles[move.start[0]][move.start[1]] = None
 
     def switch_player_to_move(self):
         if self.player_to_move == Color.RED:
-            self.__player_to_move == Color.BLACK
+            self.__player_to_move = Color.BLACK
         else:
-            self.__player_to_move == Color.RED
+            self.__player_to_move = Color.RED
 
     def contains(self, position):
         return 0 <= position[0] < len(self.tiles) \
@@ -168,12 +186,6 @@ def _possible_normal_moves(board, color):
     return normal_moves
 
 
-def _midpoint(point1, point2):
-    r1, c1 = point1
-    r2, c2 = point2
-    return ((r1 + r2) // 2, (c1 + c2) // 2)
-
-
 def _possible_attacks(board, color):
     attacks = []
 
@@ -191,7 +203,8 @@ def _possible_attacks(board, color):
     return attacks
 
 
-def possible_moves(board, color):
+def possible_moves(board):
+    color = board.player_to_move
     attack_moves = _possible_attacks(board, color)
 
     if attack_moves:

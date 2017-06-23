@@ -1,12 +1,8 @@
-import ai
-import checkers
+from cli import User, AI, Game
 
 
 def main():
-    board = checkers.Board()
-    print(board)
-    board.move(ai.make_move(board))
-    print(board)
+    Game(User, AI).run()
 
 
 if __name__ == "__main__":

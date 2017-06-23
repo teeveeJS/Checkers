@@ -1,6 +1,5 @@
 import copy
 import math
-import time
 
 import checkers
 
@@ -46,4 +45,4 @@ def _negamax(board, a, b, depth_limit):
 
 
 def make_move(board):
-    return _negamax(board, -math.inf, math.inf, 6)[0]
+    return _negamax(board, -math.inf, math.inf, 4)[0]
